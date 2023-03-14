@@ -25,6 +25,7 @@ class FlexList extends MultiChildRenderObjectWidget {
     required List<Widget> children,
     this.horizontalSpacing = 10.0,
     this.verticalSpacing = 10.0,
+    this.crossAxisAlignment = WrapCrossAlignment.start,
   }) : super(children: children);
 
   /// Defines spacing between items in same row
@@ -33,17 +34,26 @@ class FlexList extends MultiChildRenderObjectWidget {
   /// Defines spacing between rows
   final double verticalSpacing;
 
+  /// Defines how the children within a run should be aligned relative to each other in
+  /// the cross axis.
+  ///
+  /// Defaults to [WrapCrossAlignment.start].
+  final WrapCrossAlignment crossAxisAlignment;
+
   @override
   RenderObject createRenderObject(BuildContext context) {
     return RenderFlexList(
-        horizontalSpacing: horizontalSpacing, verticalSpacing: verticalSpacing);
+        horizontalSpacing: horizontalSpacing,
+        verticalSpacing: verticalSpacing,
+        crossAxisAlignment: crossAxisAlignment);
   }
 
   @override
   void updateRenderObject(BuildContext context, RenderFlexList renderObject) {
     renderObject
       ..horizontalSpacing = horizontalSpacing
-      ..verticalSpacing = verticalSpacing;
+      ..verticalSpacing = verticalSpacing
+      ..crossAxisAlignment = crossAxisAlignment;
   }
 }
 
@@ -57,6 +67,7 @@ class FlexList extends MultiChildRenderObjectWidget {
 ///
 /// [horizontalSpacing] defines the spacing between items in same row.
 /// [verticalSpacing] defines the spacing between row.
+/// [crossAxisAlignment] defines item alignment within a row.
 class RenderFlexList extends RenderBox
     with
         ContainerRenderObjectMixin<RenderBox, _FlexListParentData>,
@@ -64,9 +75,11 @@ class RenderFlexList extends RenderBox
   RenderFlexList(
       {List<RenderBox>? children,
       double horizontalSpacing = 10.0,
-      double verticalSpacing = 10.0})
+      double verticalSpacing = 10.0,
+      WrapCrossAlignment crossAxisAlignment = WrapCrossAlignment.start})
       : _horizontalSpacing = horizontalSpacing,
-        _verticalSpacing = verticalSpacing {
+        _verticalSpacing = verticalSpacing,
+        _crossAxisAlignment = crossAxisAlignment {
     addAll(children);
   }
 
@@ -95,6 +108,20 @@ class RenderFlexList extends RenderBox
       return;
     }
     _verticalSpacing = value;
+    markNeedsLayout();
+  }
+
+  // Alignment of items within a row
+  WrapCrossAlignment get crossAxisAlignment => _crossAxisAlignment;
+  WrapCrossAlignment _crossAxisAlignment;
+
+  /// Sets the alignment of items within a row and marks that
+  /// the [RenderBox] needs to get relayed out.
+  set crossAxisAlignment(WrapCrossAlignment value) {
+    if (_crossAxisAlignment == value) {
+      return;
+    }
+    _crossAxisAlignment = value;
     markNeedsLayout();
   }
 
@@ -249,7 +276,17 @@ class RenderFlexList extends RenderBox
             width: finalChildWidth, height: childParentData._initSize.height);
         child.layout(consts);
 
-        childParentData.offset = Offset(offsetX, offsetY);
+        final itemOffsetY = crossAxisAlignment == WrapCrossAlignment.end
+            ? offsetY +
+                (row.contentRawSize.height - childParentData._initSize.height)
+            : crossAxisAlignment == WrapCrossAlignment.center
+                ? offsetY +
+                    ((row.contentRawSize.height -
+                            childParentData._initSize.height) /
+                        2)
+                : offsetY;
+
+        childParentData.offset = Offset(offsetX, itemOffsetY);
         offsetX += finalChildWidth + horizontalSpacing;
 
         child = childParentData.nextSibling;
