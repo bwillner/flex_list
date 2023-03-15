@@ -199,7 +199,8 @@ class RenderFlexList extends RenderBox
       firstRowChild = false;
     }
 
-    return Size(constraints.maxWidth, height);
+    return Size(constraints.maxWidth,
+        height < constraints.minHeight ? constraints.minHeight : height);
   }
 
   @override
@@ -210,6 +211,9 @@ class RenderFlexList extends RenderBox
     var rowWidth = 0.0;
     var rowMaxHeight = 0.0;
     var rowItemNumber = 0;
+
+    // Keep track of overall height
+    double overallHeight = 0.0;
 
     final childConstraint = BoxConstraints(
         minWidth: 0,
@@ -230,6 +234,10 @@ class RenderFlexList extends RenderBox
         // add to row to rows
         final rowSize = Size(rowWidth, rowMaxHeight);
         rows.add(_RowMetrics(rowItemNumber, rowSize));
+
+        // add height of row to overallHeight
+        overallHeight += rowMaxHeight + verticalSpacing;
+
         // reset row with first new element
         rowWidth = 0;
         rowMaxHeight = 0.0;
@@ -247,11 +255,19 @@ class RenderFlexList extends RenderBox
     final rowSize = Size(rowWidth, rowMaxHeight);
     rows.add(_RowMetrics(rowItemNumber, rowSize));
 
+    // add height of last row to overallHeight
+    overallHeight += rowMaxHeight;
+
     // position childs
     child = firstChild;
 
+    // calculate offset to meet minHeight constraint
+    double addedOffsetForMinHeight = overallHeight < constraints.minHeight
+        ? ((constraints.minHeight - overallHeight) / 2)
+        : 0.0;
+
     var offsetX = 0.0;
-    var offsetY = 0.0;
+    var offsetY = 0.0 + addedOffsetForMinHeight;
     for (int i = 0; i < rows.length; ++i) {
       final row = rows[i];
       final eachChildAvailableWidth =
@@ -300,7 +316,7 @@ class RenderFlexList extends RenderBox
       itemNumber = 0;
     }
 
-    size = Size(constraints.maxWidth, offsetY);
+    size = Size(constraints.maxWidth, offsetY + addedOffsetForMinHeight);
   }
 
   @override
