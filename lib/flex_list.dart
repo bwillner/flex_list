@@ -23,10 +23,14 @@ class FlexList extends MultiChildRenderObjectWidget {
   FlexList({
     super.key,
     required List<Widget> children,
+    this.directionality = TextDirection.ltr,
     this.horizontalSpacing = 10.0,
     this.verticalSpacing = 10.0,
     this.crossAxisAlignment = WrapCrossAlignment.start,
-  }) : super(children: children);
+  }) : super(
+            children: directionality == TextDirection.rtl
+                ? children.reversed.toList()
+                : children);
 
   /// Defines spacing between items in same row
   final double horizontalSpacing;
@@ -39,6 +43,10 @@ class FlexList extends MultiChildRenderObjectWidget {
   ///
   /// Defaults to [WrapCrossAlignment.start].
   final WrapCrossAlignment crossAxisAlignment;
+
+  /// Defines TextDirection. Important for right-to-left locales.
+  /// Defaults to [TextDirection.ltr].
+  final TextDirection directionality;
 
   @override
   RenderObject createRenderObject(BuildContext context) {
