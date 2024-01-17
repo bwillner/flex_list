@@ -23,7 +23,7 @@ class MyApp extends StatelessWidget {
                   children: [
                     for (var i = 0; i < 10; i++)
                       Container(
-                        color: Theme.of(context).backgroundColor,
+                        color: Theme.of(context).colorScheme.background,
                         padding: EdgeInsets.symmetric(
                             horizontal: 20 + 20 * (i % 4), vertical: 10),
                         child: Text("Item $i"),
